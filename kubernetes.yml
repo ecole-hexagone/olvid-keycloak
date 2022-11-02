@@ -1,0 +1,122 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: olvid-keycloak
+  labels:
+    name: olvid-keycloak
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: olvid-keycloak-secrets
+  namespace: olvid-keycloak
+data:
+  DB_ADDR: #changeme
+  DB_DATABASE: #changeme
+  DB_PASSWORD: #changeme
+  DB_PORT: #changeme
+  DB_USER: #changeme
+  DB_VENDOR: #changeme
+type: Opaque
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: olvid-keycloak-https
+  namespace: olvid-keycloak
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - sso-olvid.ecole-hexagone.com
+      secretName: olvid-keycloak-cert
+  rules:
+    - host: sso-olvid.ecole-hexagone.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: olvid-keycloak
+                port:
+                  number: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: olvid-keycloak
+  namespace: olvid-keycloak
+  labels:
+    app: olvid-keycloak
+spec:
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  selector:
+    app: olvid-keycloak
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: olvid-keycloak
+  namespace: olvid-keycloak
+  labels:
+    app: olvid-keycloak
+spec:
+  selector:
+    matchLabels:
+      app: olvid-keycloak
+  template:
+    metadata:
+      labels:
+        app: olvid-keycloak
+    spec:
+      containers:
+      - name: olvid-keycloak
+        image: ecolehexagone/olvid-keycloak:17.0.1-legacy
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_VENDOR
+          valueFrom:
+            secretKeyRef:
+              name: olvid-keycloak-secrets
+              key: DB_VENDOR
+        - name: DB_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: olvid-keycloak-secrets
+              key: DB_DATABASE
+        - name: DB_ADDR
+          valueFrom:
+            secretKeyRef:
+              name: olvid-keycloak-secrets
+              key: DB_ADDR
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: olvid-keycloak-secrets
+              key: DB_PORT
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: olvid-keycloak-secrets
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: olvid-keycloak-secrets
+              key: DB_PASSWORD
+        - name: KEYCLOAK_HOSTNAME
+          value: sso-olvid.ecole-hexagone.com
+        - name: PROXY_ADDRESS_FORWARDING
+          value: "true"
+        - name: KEYCLOAK_STATISTICS
+          value: all

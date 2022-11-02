@@ -1,0 +1,27 @@
+#content {
+    max-width: 400px;
+    margin: 20vh auto 0 auto;
+}
+
+#label {
+    margin-bottom: 10px;
+}
+
+#button {
+    text-align: center;
+    background: white;
+    padding: 13px 20px 10px 20px;
+    border-radius: 5px;
+    color: #2f65f5;
+    font-weight: bold;
+    transition: background linear .25s, color linear .15s;
+}
+
+#button:hover {
+    background: #2f65f5;
+    color: white;
+}
+
+#buttonLink {
+    text-decoration: none;
+}

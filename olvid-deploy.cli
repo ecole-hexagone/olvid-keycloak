@@ -1,0 +1,10 @@
+embed-server --server-config=standalone-ha.xml --std-out=echo
+batch
+    /subsystem=keycloak-server:list-add(name=providers, value=module:io.olvid.keycloak)
+    /subsystem=keycloak-server/spi=themeSelector/:add
+    /subsystem=keycloak-server/spi=themeSelector/:write-attribute(name=default-provider,value=OlvidThemeSelector)
+    /subsystem=keycloak-server/spi=themeSelector/provider=OlvidThemeSelector/:add(enabled=true)
+    /subsystem=undertow/configuration=handler/file=olvid-console:add(path="${jboss.home.dir}/olvid-console")
+    /subsystem=undertow/server=default-server/host=default-host/location=\/olvid:add(handler=olvid-console)
+run-batch
+stop-embedded-server
